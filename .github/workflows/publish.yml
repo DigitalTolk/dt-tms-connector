@@ -6,37 +6,91 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    env:
-      TYPO3_API_TOKEN: ${{ secrets.TYPO3_API_TOKEN }}
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      extension-key: ${{ steps.meta.outputs.extension-key }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
         with:
           php-version: '8.3'
           extensions: intl, zip
           tools: composer:v2
           coverage: none
       - name: Check that the tag matches ext_emconf.php
+        id: meta
         run: |
           version="${GITHUB_REF_NAME}"
           grep -q "'version' => '${version}'" ext_emconf.php || { echo "ext_emconf.php does not have version ${version}"; exit 1; }
-          echo "VERSION=${version}" >> "$GITHUB_ENV"
-          echo "EXTENSION_KEY=$(jq -r '.extra."typo3/cms"."extension-key"' composer.json)" >> "$GITHUB_ENV"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "extension-key=$(jq -r '.extra."typo3/cms"."extension-key"' composer.json)" >> "$GITHUB_OUTPUT"
+      - name: Write the version into composer.json for the Composer artifact install
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: composer config version "${VERSION}"
       - name: Install Tailor
-        run: composer global require --no-interaction --no-progress typo3/tailor
+        run: composer global require --no-interaction --no-progress typo3/tailor:2.1.0
       - name: Build the extension zip
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          EXTENSION_KEY: ${{ steps.meta.outputs.extension-key }}
         run: php ~/.composer/vendor/bin/tailor create-artefact "${VERSION}" "${EXTENSION_KEY}"
-      - name: Create the GitHub release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: extension-zip
+          path: tailor-version-artefact/*.zip
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: extension-zip
+          path: dist
+      - name: Create the GitHub release with the zip
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${VERSION}" tailor-version-artefact/*.zip --title "${VERSION}" --notes "See CHANGELOG.md."
-      - name: Publish to the TYPO3 Extension Repository
-        if: env.TYPO3_API_TOKEN != ''
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
-          comment="$(git tag -l --format='%(contents)' "${VERSION}" | head -1)"
-          php ~/.composer/vendor/bin/tailor ter:publish --comment "${comment:-Release ${VERSION}}" "${VERSION}" "${EXTENSION_KEY}"
+          gh release create "${VERSION}" dist/*.zip --repo "${GITHUB_REPOSITORY}" --title "${VERSION}" \
+            --notes "Install the zip as described in the README (Composer artifact folder or Extension Manager upload). Changes are in CHANGELOG.md."
+
+  ter:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ter
+    env:
+      HAS_TER_TOKEN: ${{ secrets.TYPO3_API_TOKEN != '' }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: extension-zip
+          path: dist
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
+        if: env.HAS_TER_TOKEN == 'true'
+        with:
+          php-version: '8.3'
+          extensions: intl, zip
+          tools: composer:v2
+          coverage: none
+      - name: Install Tailor
+        if: env.HAS_TER_TOKEN == 'true'
+        run: composer global require --no-interaction --no-progress typo3/tailor:2.1.0
+      - name: Publish to the TYPO3 Extension Repository
+        if: env.HAS_TER_TOKEN == 'true'
+        env:
+          TYPO3_API_TOKEN: ${{ secrets.TYPO3_API_TOKEN }}
+          VERSION: ${{ needs.build.outputs.version }}
+          EXTENSION_KEY: ${{ needs.build.outputs.extension-key }}
+        run: php ~/.composer/vendor/bin/tailor ter:publish --artefact "$(ls dist/*.zip)" --comment "Release ${VERSION}" "${VERSION}" "${EXTENSION_KEY}"

@@ -6,6 +6,7 @@ namespace DigitalTolk\TmsConnector\Service;
 
 use DigitalTolk\TmsConnector\Domain\Settings;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Core\Environment;
 
 final class SettingsProvider
 {
@@ -29,6 +30,8 @@ final class SettingsProvider
             (int)($config['workspaceId'] ?? 0),
             (bool)($config['hideNewTranslations'] ?? true),
             max(1, (int)($config['pollMinutes'] ?? 15)),
+            array_values(array_filter(array_map('trim', explode(',', (string)($config['storageHosts'] ?? '*.amazonaws.com'))))),
+            Environment::getContext()->isDevelopment(),
         );
     }
 }

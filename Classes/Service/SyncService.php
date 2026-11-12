@@ -64,7 +64,7 @@ final class SyncService
                 $site = $this->siteFinder->getSiteByPageId((int)$package['page_uid']);
                 $cfg = (int)$package['l10n_cfg'];
                 if ($cfg === 0) {
-                    $cfg = $this->runner->createConfiguration($site->getRootPageId(), 'DigitalTolk ' . $package['reference'], $pageUids);
+                    $cfg = $this->runner->createConfiguration($site->getRootPageId(), 'DigitalTolk ' . $package['reference'], $pageUids, $this->collector->rawHtmlElements($pageUids));
                     $this->packages->updatePackage($uid, ['l10n_cfg' => $cfg]);
                 }
                 $items = $this->collector->items($pageUids, $site);

@@ -21,8 +21,8 @@ final class CatxmlFieldsTest extends TestCase
         $fields = (new CatxmlFields())->read($xml);
 
         self::assertSame(['pages:2:title', 'tt_content:7:bodytext', 'tt_content:8:bodytext'], array_keys($fields));
-        self::assertSame('We are Muster & Co.', $fields['tt_content:7:bodytext']['text']);
-        self::assertSame('Old html', $fields['tt_content:8:bodytext']['text']);
+        self::assertSame('<p>We are <strong>Muster</strong> & Co.</p>', $fields['tt_content:7:bodytext']['text']);
+        self::assertSame('<p>Old <b>html</p>', $fields['tt_content:8:bodytext']['text']);
         self::assertSame(7, $fields['tt_content:7:bodytext']['uid']);
     }
 

@@ -133,7 +133,7 @@ final class TranslationsController
         if ($package === null || !$this->canReadPage((int)$package['page_uid'])) {
             return $this->fail($this->uri('', ['id' => $pageUid]), 'The package does not exist.');
         }
-        $items = json_decode((string)$package['items'], true) ?: [];
+        $items = array_values(array_filter(json_decode((string)$package['items'], true) ?: [], fn (array $i): bool => $this->canReadPage($this->itemPage($i))));
         $versions = $this->collector->currentVersions($items);
         foreach ($items as &$item) {
             $current = $versions[$item['id']] ?? null;
@@ -146,7 +146,7 @@ final class TranslationsController
         foreach ($languages as &$language) {
             $language['previewUri'] = $this->uri('detail', ['id' => $pageUid, 'package' => $package['uid'], 'language' => $language['uid']]);
             $language['canImport'] = $language['state'] === LanguageState::DOWNLOADED;
-            if ((int)$language['uid'] === $previewUid) {
+            if ((int)$language['uid'] === $previewUid && $this->backendUser()->checkLanguageAccess((int)$language['language_id'])) {
                 $preview = $this->preview((string)$package['export_xml'], (string)$language['translation_xml']);
             }
         }
@@ -213,6 +213,11 @@ final class TranslationsController
         if ($refusal !== '') {
             return $this->fail($back, $refusal);
         }
+        foreach ($this->packages->languages((int)$package['uid']) as $language) {
+            if (!$this->backendUser()->checkLanguageAccess((int)$language['language_id'])) {
+                return $this->fail($back, 'You may not edit every language of this package.');
+            }
+        }
         if ($package['state'] === PackageState::SENT) {
             try {
                 $this->clients->create()->cancel((string)$package['reference']);
@@ -270,17 +275,30 @@ final class TranslationsController
                 ? 'Switch to the live workspace. These translations go to live.'
                 : sprintf('Switch to workspace %d. These translations go to that workspace.', $workspaceId);
         }
-        if (!$user->check('tables_modify', 'pages') || !$user->check('tables_modify', 'tt_content')) {
-            return 'You may not edit pages and content.';
+        foreach (['pages', 'tt_content', 'sys_file_reference'] as $table) {
+            if (!$user->check('tables_modify', $table)) {
+                return 'You may not edit pages, content and file references.';
+            }
         }
         $clause = $user->getPagePermsClause(Permission::PAGE_EDIT | Permission::CONTENT_EDIT);
         foreach ($pageUids as $uid) {
-            if (BackendUtility::readPageAccess($uid, $clause) === false) {
+            $page = BackendUtility::readPageAccess($uid, $clause);
+            if ($page === false) {
                 return sprintf('You may not edit page %d or its content.', $uid);
+            }
+            if (!$user->isAdmin() && (int)($page['editlock'] ?? 0) === 1) {
+                return sprintf('Page %d is locked for editing.', $uid);
             }
         }
 
         return '';
+    }
+
+    private function itemPage(array $item): int
+    {
+        $id = str_starts_with((string)($item['id'] ?? ''), 'pages:') ? (string)$item['id'] : (string)($item['parent_id'] ?? '');
+
+        return (int)substr($id, strlen('pages:'));
     }
 
     private function canReadPage(int $uid): bool

@@ -23,7 +23,7 @@ final class L10nmgrRunner
     ) {
     }
 
-    public function createConfiguration(int $pid, string $title, array $pageUids): int
+    public function createConfiguration(int $pid, string $title, array $pageUids, array $exclude = []): int
     {
         $now = time();
         $connection = $this->connectionPool->getConnectionForTable('tx_l10nmgr_cfg');
@@ -37,6 +37,7 @@ final class L10nmgrRunner
             'tablelist' => self::TABLES,
             'displaymode' => 0,
             'filenameprefix' => 'dttms',
+            'exclude' => implode(',', $exclude),
         ]);
 
         return (int)$connection->lastInsertId();
