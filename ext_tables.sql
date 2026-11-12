@@ -1,0 +1,50 @@
+CREATE TABLE tx_dttmsconnector_package (
+    uid int(11) unsigned NOT NULL auto_increment,
+    pid int(11) unsigned DEFAULT '0' NOT NULL,
+    tstamp int(11) unsigned DEFAULT '0' NOT NULL,
+    crdate int(11) unsigned DEFAULT '0' NOT NULL,
+    created_by int(11) unsigned DEFAULT '0' NOT NULL,
+    reference varchar(100) DEFAULT '' NOT NULL,
+    state varchar(32) DEFAULT '' NOT NULL,
+    page_uid int(11) unsigned DEFAULT '0' NOT NULL,
+    depth int(11) DEFAULT '0' NOT NULL,
+    page_uids text,
+    source_language varchar(16) DEFAULT '' NOT NULL,
+    due_date int(11) unsigned DEFAULT '0' NOT NULL,
+    note text,
+    workspace_id int(11) unsigned DEFAULT '0' NOT NULL,
+    l10n_cfg int(11) unsigned DEFAULT '0' NOT NULL,
+    items mediumtext,
+    item_count int(11) unsigned DEFAULT '0' NOT NULL,
+    export_xml mediumtext,
+    remote_state varchar(32) DEFAULT '' NOT NULL,
+    review_reasons text,
+    error text,
+    needs_poll tinyint(1) unsigned DEFAULT '0' NOT NULL,
+    sent_at int(11) unsigned DEFAULT '0' NOT NULL,
+    polled_at int(11) unsigned DEFAULT '0' NOT NULL,
+
+    PRIMARY KEY (uid),
+    UNIQUE KEY reference (reference),
+    KEY state (state)
+);
+
+CREATE TABLE tx_dttmsconnector_language (
+    uid int(11) unsigned NOT NULL auto_increment,
+    pid int(11) unsigned DEFAULT '0' NOT NULL,
+    tstamp int(11) unsigned DEFAULT '0' NOT NULL,
+    crdate int(11) unsigned DEFAULT '0' NOT NULL,
+    package int(11) unsigned DEFAULT '0' NOT NULL,
+    language_id int(11) DEFAULT '0' NOT NULL,
+    language_code varchar(16) DEFAULT '' NOT NULL,
+    state varchar(32) DEFAULT '' NOT NULL,
+    translation_xml mediumtext,
+    error text,
+    import_requested_by int(11) unsigned DEFAULT '0' NOT NULL,
+    imported_at int(11) unsigned DEFAULT '0' NOT NULL,
+    import_summary text,
+
+    PRIMARY KEY (uid),
+    KEY package (package),
+    KEY state (state)
+);

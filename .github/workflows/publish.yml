@@ -1,0 +1,42 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      TYPO3_API_TOKEN: ${{ secrets.TYPO3_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, zip
+          tools: composer:v2
+          coverage: none
+      - name: Check that the tag matches ext_emconf.php
+        run: |
+          version="${GITHUB_REF_NAME}"
+          grep -q "'version' => '${version}'" ext_emconf.php || { echo "ext_emconf.php does not have version ${version}"; exit 1; }
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+          echo "EXTENSION_KEY=$(jq -r '.extra."typo3/cms"."extension-key"' composer.json)" >> "$GITHUB_ENV"
+      - name: Install Tailor
+        run: composer global require --no-interaction --no-progress typo3/tailor
+      - name: Build the extension zip
+        run: php ~/.composer/vendor/bin/tailor create-artefact "${VERSION}" "${EXTENSION_KEY}"
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${VERSION}" tailor-version-artefact/*.zip --title "${VERSION}" --notes "See CHANGELOG.md."
+      - name: Publish to the TYPO3 Extension Repository
+        if: env.TYPO3_API_TOKEN != ''
+        run: |
+          comment="$(git tag -l --format='%(contents)' "${VERSION}" | head -1)"
+          php ~/.composer/vendor/bin/tailor ter:publish --comment "${comment:-Release ${VERSION}}" "${VERSION}" "${EXTENSION_KEY}"

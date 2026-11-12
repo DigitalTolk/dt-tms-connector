@@ -1,0 +1,8 @@
+/vendor/
+/.Build/
+/var/
+.phpunit.cache/
+.php-cs-fixer.cache
+/composer.lock
+/Documentation-GENERATED-temp/
+/tailor-version-artefact/

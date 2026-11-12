@@ -1,0 +1,87 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+<f:layout name="Module" />
+<f:section name="Content">
+    <h1>DigitalTolk translations</h1>
+
+    <div class="row" id="dttms-connection">
+        <div class="col-md-8">
+            <f:if condition="{configured}">
+                <f:then><p>Import mode: <strong>{importMode}</strong>.</p></f:then>
+                <f:else>
+                    <f:be.infobox state="1" title="Not set up">
+                        Set the adapter URL, the gateway token and the connection key in Settings, Extension Configuration, dt_tms_connector.
+                    </f:be.infobox>
+                </f:else>
+            </f:if>
+        </div>
+        <div class="col-md-4 text-end">
+            <form method="post" action="{testUri}">
+                <button type="submit" class="btn btn-default" id="dttms-test">Test connection</button>
+            </form>
+        </div>
+    </div>
+
+    <h2>Send for translation</h2>
+    <f:if condition="{targetLanguages}">
+        <f:then>
+            <form method="post" action="{sendUri}" id="dttms-send">
+                <p>Page: <strong>{page.title}</strong> [{page.uid}]. Source language: {sourceLanguage}.</p>
+                <div class="row">
+                    <div class="col-md-4 form-group mb-3">
+                        <label class="form-label" for="dttms-depth">Pages</label>
+                        <select class="form-select" id="dttms-depth" name="depth">
+                            <f:for each="{depths}" as="label" key="value">
+                                <option value="{value}">{label}</option>
+                            </f:for>
+                        </select>
+                    </div>
+                    <div class="col-md-4 form-group mb-3">
+                        <label class="form-label" for="dttms-due">Due date</label>
+                        <input class="form-control" type="date" id="dttms-due" name="due">
+                    </div>
+                </div>
+                <fieldset class="mb-3">
+                    <legend class="form-label fs-6">Target languages</legend>
+                    <f:for each="{targetLanguages}" as="language">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="languages[]" value="{language.id}" id="dttms-lang-{language.id}">
+                            <label class="form-check-label" for="dttms-lang-{language.id}">{language.title} ({language.code})</label>
+                        </div>
+                    </f:for>
+                </fieldset>
+                <div class="form-group mb-3">
+                    <label class="form-label" for="dttms-note">Note for DigitalTolk</label>
+                    <textarea class="form-control" id="dttms-note" name="note" rows="2" maxlength="2000"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Send</button>
+            </form>
+        </f:then>
+        <f:else>
+            <p>Pick a page of a site with more than one language in the page tree.</p>
+        </f:else>
+    </f:if>
+
+    <h2 class="mt-4">Packages</h2>
+    <table class="table table-striped table-hover" id="dttms-packages">
+        <thead>
+            <tr><th>Reference</th><th>State</th><th>Languages</th><th>Items</th><th>Created</th><th>Error</th></tr>
+        </thead>
+        <tbody>
+            <f:for each="{packages}" as="package">
+                <tr data-reference="{package.reference}">
+                    <td><a href="{package.detailUri}">{package.reference}</a></td>
+                    <td>{package.state}</td>
+                    <td>
+                        <f:for each="{package.languages}" as="language" iteration="i">
+                            {language.language_code}: {language.state}<f:if condition="{i.isLast}"><f:else>, </f:else></f:if>
+                        </f:for>
+                    </td>
+                    <td>{package.item_count}</td>
+                    <td><f:format.date format="Y-m-d H:i">{package.crdate}</f:format.date></td>
+                    <td>{package.error}</td>
+                </tr>
+            </f:for>
+        </tbody>
+    </table>
+</f:section>
+</html>

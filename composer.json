@@ -1,0 +1,70 @@
+{
+    "name": "digitaltolk/dt-tms-connector",
+    "type": "typo3-cms-extension",
+    "description": "Send TYPO3 pages to DigitalTolk for translation and import the translations.",
+    "keywords": [
+        "TYPO3",
+        "extension",
+        "translation",
+        "localization",
+        "l10nmgr",
+        "DigitalTolk"
+    ],
+    "homepage": "https://github.com/DigitalTolk/dt-tms-connector",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "DigitalTolk",
+            "email": "engineering@digitaltolk.com",
+            "homepage": "https://www.digitaltolk.com",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/DigitalTolk/dt-tms-connector/issues",
+        "source": "https://github.com/DigitalTolk/dt-tms-connector",
+        "docs": "https://github.com/DigitalTolk/dt-tms-connector#readme",
+        "security": "https://github.com/DigitalTolk/dt-tms-connector/security/policy"
+    },
+    "require": {
+        "php": "^8.3",
+        "ext-dom": "*",
+        "ext-json": "*",
+        "localizationteam/l10nmgr": "^13",
+        "typo3/cms-backend": "^12.4 || ^13.4",
+        "typo3/cms-core": "^12.4 || ^13.4",
+        "typo3/cms-fluid": "^12.4 || ^13.4",
+        "typo3/cms-scheduler": "^12.4 || ^13.4"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^11.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "DigitalTolk\\TmsConnector\\": "Classes/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DigitalTolk\\TmsConnector\\Tests\\": "Tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "typo3/class-alias-loader": true,
+            "typo3/cms-composer-installers": true
+        },
+        "platform": {
+            "php": "8.3.0"
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "dt_tms_connector",
+            "web-dir": ".Build/public"
+        }
+    }
+}

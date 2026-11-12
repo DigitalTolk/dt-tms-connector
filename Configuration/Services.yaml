@@ -1,0 +1,24 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  DigitalTolk\TmsConnector\:
+    resource: '../Classes/*'
+    exclude:
+      - '../Classes/Domain/Settings.php'
+      - '../Classes/Import/RekeyResult.php'
+      - '../Classes/Import/ImportResult.php'
+      - '../Classes/Api/AdapterClient.php'
+      - '../Classes/Api/AdapterException.php'
+
+  DigitalTolk\TmsConnector\Middleware\CallbackMiddleware:
+    public: true
+
+  DigitalTolk\TmsConnector\Command\SyncCommand:
+    tags:
+      - name: 'console.command'
+        command: 'dttms:sync'
+        description: 'Send queued packages to DigitalTolk, poll open packages, download and import translations.'
+        schedulable: true

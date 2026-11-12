@@ -1,0 +1,81 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+<f:layout name="Module" />
+<f:section name="Content">
+    <p><a href="{backUri}">Back to the list</a></p>
+    <h1>{package.reference}</h1>
+    <p>State: <strong>{package.state}</strong><f:if condition="{package.remote_state}">. DigitalTolk: {package.remote_state}</f:if>.</p>
+    <f:if condition="{package.error}"><f:be.infobox state="2" title="Error">{package.error}</f:be.infobox></f:if>
+    <f:if condition="{reviewReasons}">
+        <f:be.infobox state="-1" title="DigitalTolk staff review this package">
+            <ul><f:for each="{reviewReasons}" as="reason"><li>{reason}</li></f:for></ul>
+        </f:be.infobox>
+    </f:if>
+    <f:if condition="{canCancel}">
+        <form method="post" action="{cancelUri}" class="mb-3">
+            <button type="submit" class="btn btn-default" id="dttms-cancel">Cancel package</button>
+        </form>
+    </f:if>
+
+    <h2>Languages</h2>
+    <table class="table table-striped" id="dttms-languages">
+        <thead><tr><th>Language</th><th>State</th><th>Import</th><th>Error</th><th></th></tr></thead>
+        <tbody>
+            <f:for each="{languages}" as="language">
+                <tr data-language="{language.language_code}">
+                    <td>{language.language_code}</td>
+                    <td>{language.state}</td>
+                    <td>{language.import_summary}</td>
+                    <td>{language.error}</td>
+                    <td class="text-end">
+                        <f:if condition="{language.translation_xml}">
+                            <a class="btn btn-default btn-sm" href="{language.previewUri}">Preview</a>
+                        </f:if>
+                        <f:if condition="{language.canImport}">
+                            <form method="post" action="{importUri}" class="d-inline">
+                                <input type="hidden" name="language" value="{language.uid}">
+                                <button type="submit" class="btn btn-primary btn-sm">Import</button>
+                            </form>
+                        </f:if>
+                    </td>
+                </tr>
+            </f:for>
+        </tbody>
+    </table>
+
+    <f:if condition="{preview}">
+        <h2>Preview</h2>
+        <table class="table table-sm" id="dttms-preview">
+            <thead><tr><th>Field</th><th>Source</th><th>Translation</th></tr></thead>
+            <tbody>
+                <f:for each="{preview}" as="row">
+                    <tr><td>{row.table}:{row.uid} {row.field}</td><td>{row.source}</td><td>{row.text}</td></tr>
+                </f:for>
+            </tbody>
+        </table>
+    </f:if>
+
+    <h2>Items</h2>
+    <f:if condition="{changedCount}">
+        <f:be.infobox state="1" title="Changed since sending">
+            {changedCount} items changed or were removed after the package was sent. Their translations are based on an older version.
+        </f:be.infobox>
+    </f:if>
+    <table class="table table-striped" id="dttms-items">
+        <thead><tr><th>Item</th><th>Type</th><th>Title</th><th>Sent version</th><th></th></tr></thead>
+        <tbody>
+            <f:for each="{items}" as="item">
+                <tr data-item-id="{item.id}">
+                    <td>{item.id}</td>
+                    <td>{item.type}</td>
+                    <td><f:if condition="{item.url}"><f:then><a href="{item.url}" target="_blank" rel="noopener">{item.title}</a></f:then><f:else>{item.title}</f:else></f:if></td>
+                    <td>{item.source_version}</td>
+                    <td>
+                        <f:if condition="{item.status} == 'changed'"><span class="badge badge-warning">changed since sending</span></f:if>
+                        <f:if condition="{item.status} == 'removed'"><span class="badge badge-danger">removed</span></f:if>
+                    </td>
+                </tr>
+            </f:for>
+        </tbody>
+    </table>
+</f:section>
+</html>

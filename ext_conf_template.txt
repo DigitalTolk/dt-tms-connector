@@ -1,0 +1,14 @@
+# cat=connection; type=string; label=Adapter URL: The DigitalTolk API address. DigitalTolk gives it to you with the gateway token and the connection key. The environment variable DT_TMS_ADAPTER_URL replaces it.
+adapterUrl =
+# cat=connection; type=string; label=Gateway token: The DigitalTolk personal access token. The environment variable DT_TMS_TOKEN replaces it.
+token =
+# cat=connection; type=string; label=Connection key: The key from DigitalTolk, starting with dtk_. The environment variable DT_TMS_CONNECTION_KEY replaces it.
+connectionKey =
+# cat=import; type=options[Review in the module=review,Import into a workspace=workspace]; label=Import mode: Review lets an editor check and import each language. Workspace imports at once into the workspace below.
+importMode = review
+# cat=import; type=int+; label=Workspace UID: Used when the import mode is workspace.
+workspaceId = 0
+# cat=import; type=boolean; label=Hide new translations: In review mode, new page and content translations are imported hidden.
+hideNewTranslations = 1
+# cat=sync; type=int+; label=Poll interval in minutes: How often the sync command asks for the status of open packages.
+pollMinutes = 15
