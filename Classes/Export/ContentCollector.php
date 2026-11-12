@@ -14,6 +14,7 @@ final class ContentCollector
 {
     public const MAX_ITEMS = 2000;
     public const FILE = 'export.xml';
+    public const RAW_HTML_TYPES = ['html'];
     private const MAX_CHARS = 500;
     private const SKIPPED_DOKTYPES = [199, 254, 255];
 
@@ -76,6 +77,9 @@ final class ContentCollector
             $items[] = $item;
         }
         foreach ($this->rows('tt_content', 'pid', $pageUids, 'uid,pid,header,CType,tstamp', true) as $content) {
+            if (in_array((string)$content['CType'], self::RAW_HTML_TYPES, true)) {
+                continue;
+            }
             $items[] = [
                 'id' => 'tt_content:' . $content['uid'],
                 'type' => $this->cut((string)$content['CType']),
@@ -90,6 +94,18 @@ final class ContentCollector
         }
 
         return $items;
+    }
+
+    public function rawHtmlElements(array $pageUids): array
+    {
+        $excluded = [];
+        foreach ($this->rows('tt_content', 'pid', $pageUids, 'uid,CType', false) as $content) {
+            if (in_array((string)$content['CType'], self::RAW_HTML_TYPES, true)) {
+                $excluded[] = 'tt_content:' . $content['uid'];
+            }
+        }
+
+        return $excluded;
     }
 
     public function currentVersions(array $items): array

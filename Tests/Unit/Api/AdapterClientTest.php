@@ -22,7 +22,7 @@ final class AdapterClientTest extends TestCase
     private array $history = [];
     private array $sleeps = [];
 
-    private function client(array $responses, ?Settings $settings = null): AdapterClient
+    private function client(array $responses, ?Settings $settings = null, int $maxDownloadBytes = 52428800): AdapterClient
     {
         $this->history = [];
         $this->sleeps = [];
@@ -38,6 +38,7 @@ final class AdapterClientTest extends TestCase
             function (int $seconds): void {
                 $this->sleeps[] = $seconds;
             },
+            $maxDownloadBytes,
         );
     }
 
@@ -120,11 +121,11 @@ final class AdapterClientTest extends TestCase
     {
         $client = $this->client([new Response(200)]);
 
-        $client->upload(['method' => 'PUT', 'url' => 'https://s3.example/cms/x?sig=1', 'headers' => ['Content-Type' => 'application/xml']], '<TYPO3L10N/>');
+        $client->upload(['method' => 'PUT', 'url' => 'https://bucket.s3.eu-north-1.amazonaws.com/cms/x?sig=1', 'headers' => ['Content-Type' => 'application/xml']], '<TYPO3L10N/>');
 
         $request = $this->history[0]['request'];
         self::assertSame('PUT', $request->getMethod());
-        self::assertSame('https://s3.example/cms/x?sig=1', (string)$request->getUri());
+        self::assertSame('https://bucket.s3.eu-north-1.amazonaws.com/cms/x?sig=1', (string)$request->getUri());
         self::assertSame('application/xml', $request->getHeaderLine('Content-Type'));
         self::assertSame('', $request->getHeaderLine('Authorization'));
         self::assertSame('', $request->getHeaderLine('X-Connection-Key'));
@@ -135,7 +136,7 @@ final class AdapterClientTest extends TestCase
     {
         $client = $this->client([new Response(200, [], '<TYPO3L10N/>')]);
 
-        self::assertSame('<TYPO3L10N/>', $client->download('https://s3.example/out/en/export.xml?sig=1'));
+        self::assertSame('<TYPO3L10N/>', $client->download('https://bucket.s3.eu-north-1.amazonaws.com/out/en/export.xml?sig=1'));
         self::assertSame('', $this->history[0]['request']->getHeaderLine('Authorization'));
     }
 
@@ -157,7 +158,7 @@ final class AdapterClientTest extends TestCase
 
     public function testAllowsPlainHttpForALocalAdapter(): void
     {
-        $client = $this->client([self::success(200, ['connection' => 'local'])], new Settings('http://host.docker.internal:8080/', 'pat', 'dtk_x'));
+        $client = $this->client([self::success(200, ['connection' => 'local'])], new Settings('http://host.docker.internal:8080/', 'pat', 'dtk_x', allowLocalHttp: true));
 
         self::assertSame('local', $client->ping()['connection']);
         self::assertSame('http://host.docker.internal:8080/cms/ping', (string)$this->history[0]['request']->getUri());
@@ -225,10 +226,74 @@ final class AdapterClientTest extends TestCase
         $client->download('http://s3.example/out/en/export.xml?sig=1');
     }
 
-    public function testAllowsPlainHttpLinksForALocalAdapter(): void
+    public function testAllowsPlainHttpLinksForALocalAdapterInDevelopment(): void
     {
-        $client = $this->client([new Response(200, [], '<TYPO3L10N/>')]);
+        $client = $this->client([new Response(200, [], '<TYPO3L10N/>')], new Settings('http://host.docker.internal:9040/', 'pat', 'dtk_x', allowLocalHttp: true));
 
         self::assertSame('<TYPO3L10N/>', $client->download('http://host.docker.internal:4566/out/en/export.xml?sig=1'));
+    }
+
+    public function testRefusesPlainHttpToALocalHostOutsideDevelopment(): void
+    {
+        $client = $this->client([self::success(200, [])], new Settings('http://localhost:9040/', 'pat', 'dtk_x'));
+
+        $this->expectException(AdapterException::class);
+        $client->ping();
+    }
+
+    public function testRefusesALinkToAHostThatIsNotAllowed(): void
+    {
+        $client = $this->client([new Response(200, [], 'secret internal data')]);
+
+        try {
+            $client->download('https://intranet.customer.example/admin');
+            self::fail('no exception');
+        } catch (AdapterException $e) {
+            self::assertStringContainsString('not allowed', $e->getMessage());
+        }
+        self::assertCount(0, $this->history);
+    }
+
+    public function testAllowsLinksToTheAdapterHostAndToExtraStorageHosts(): void
+    {
+        $settings = new Settings('https://gw.example/api/v1/tms-order-adapter/', 'pat', 'dtk_x', storageHosts: ['files.example.org']);
+        $client = $this->client([new Response(200, [], 'a'), new Response(200, [], 'b')], $settings);
+
+        self::assertSame('a', $client->download('https://gw.example/files/1'));
+        self::assertSame('b', $client->download('https://files.example.org/out/1'));
+    }
+
+    public function testRefusesAnUploadThatIsNotAPut(): void
+    {
+        $client = $this->client([new Response(200)]);
+
+        $this->expectException(AdapterException::class);
+        $client->upload(['method' => 'POST', 'url' => 'https://bucket.s3.eu-north-1.amazonaws.com/cms/x?sig=1'], '<TYPO3L10N/>');
+    }
+
+    public function testSendsOnlyStorageHeadersWithAnUpload(): void
+    {
+        $client = $this->client([new Response(200)]);
+
+        $client->upload(['method' => 'PUT', 'url' => 'https://bucket.s3.eu-north-1.amazonaws.com/cms/x?sig=1', 'headers' => [
+            'Content-Type' => 'application/xml',
+            'x-amz-checksum-sha256' => 'abc',
+            'Authorization' => 'Bearer stolen',
+            'Host' => 'intranet.customer.example',
+        ]], '<TYPO3L10N/>');
+
+        $request = $this->history[0]['request'];
+        self::assertSame('application/xml', $request->getHeaderLine('Content-Type'));
+        self::assertSame('abc', $request->getHeaderLine('x-amz-checksum-sha256'));
+        self::assertSame('', $request->getHeaderLine('Authorization'));
+        self::assertSame('bucket.s3.eu-north-1.amazonaws.com', $request->getHeaderLine('Host'));
+    }
+
+    public function testRefusesADownloadThatIsTooLarge(): void
+    {
+        $client = $this->client([new Response(200, [], str_repeat('x', 2048))], null, 1024);
+
+        $this->expectException(AdapterException::class);
+        $client->download('https://bucket.s3.eu-north-1.amazonaws.com/out/en/export.xml?sig=1');
     }
 }

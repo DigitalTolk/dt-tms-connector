@@ -21,4 +21,5 @@ body:
     id: log
     attributes:
       label: Output of the sync command or the error in the module
+      description: Remove tokens, connection keys, URLs with signatures and customer content before you paste.
       render: text

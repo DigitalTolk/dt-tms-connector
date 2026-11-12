@@ -23,7 +23,11 @@ final class CatxmlFields
         foreach ($doc->getElementsByTagName('data') as $data) {
             $parts = explode(':', $data->getAttribute('key'), 3);
             $field = $parts[2] ?? '';
-            $text = trim((string)preg_replace('/\s+/u', ' ', strip_tags(html_entity_decode($data->textContent, ENT_QUOTES | ENT_HTML5))));
+            $markup = '';
+            foreach ($data->childNodes as $child) {
+                $markup .= $child instanceof \DOMCdataSection ? $child->data : (string)$doc->saveXML($child);
+            }
+            $text = trim((string)preg_replace('/\s+/u', ' ', htmlspecialchars_decode($markup)));
             if ($text === '' || ctype_digit($text)) {
                 continue;
             }

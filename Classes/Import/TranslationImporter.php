@@ -59,7 +59,7 @@ final class TranslationImporter
             array_sum(array_map(static fn (array $parents): int => count(array_unique($parents)), $after)),
             array_sum(array_map('count', $new)),
             $hidden > 0 ? sprintf(', %d new records hidden', $hidden) : '',
-        ), $warning);
+        ), trim($warning . ($result->blocked > 0 ? sprintf(' %d fields kept the source text, because the translation added scripts or active HTML.', $result->blocked) : '')));
     }
 
     private function sources(array $items): array

@@ -19,6 +19,8 @@ final class AdapterClient
     private const RETRY_STATUSES = [429, 502, 503, 504];
     private const RETRY_STATUSES_POST = [429];
     private const LOCAL_HOSTS = ['localhost', '127.0.0.1', 'host.docker.internal'];
+    private const UPLOAD_HEADERS = ['content-type', 'content-md5', 'content-length'];
+    private const CHUNK_BYTES = 65536;
 
     private readonly \Closure $sleep;
 
@@ -28,6 +30,7 @@ final class AdapterClient
         private readonly StreamFactoryInterface $streams,
         private readonly Settings $settings,
         ?\Closure $sleep = null,
+        private readonly int $maxDownloadBytes = 52428800,
     ) {
         $this->sleep = $sleep ?? static function (int $seconds): void {
             sleep($seconds);
@@ -66,11 +69,17 @@ final class AdapterClient
 
     public function upload(array $upload, string $body): void
     {
-        $url = $this->checkedUrl((string)($upload['url'] ?? ''), 'The upload link');
-        $request = $this->requests->createRequest((string)($upload['method'] ?? 'PUT'), $url)
+        if (strtoupper((string)($upload['method'] ?? 'PUT')) !== 'PUT') {
+            throw new AdapterException('The upload link must use PUT.');
+        }
+        $url = $this->checkedLink((string)($upload['url'] ?? ''), 'The upload link');
+        $request = $this->requests->createRequest('PUT', $url)
             ->withBody($this->streams->createStream($body));
         foreach ((array)($upload['headers'] ?? []) as $name => $value) {
-            $request = $request->withHeader((string)$name, (string)$value);
+            $lower = strtolower((string)$name);
+            if (in_array($lower, self::UPLOAD_HEADERS, true) || str_starts_with($lower, 'x-amz-')) {
+                $request = $request->withHeader((string)$name, (string)$value);
+            }
         }
         $response = $this->send($request);
         if ($response->getStatusCode() >= 300) {
@@ -80,12 +89,20 @@ final class AdapterClient
 
     public function download(string $url): string
     {
-        $response = $this->send($this->requests->createRequest('GET', $this->checkedUrl($url, 'The download link')));
+        $response = $this->send($this->requests->createRequest('GET', $this->checkedLink($url, 'The download link')));
         if ($response->getStatusCode() !== 200) {
             throw new AdapterException('The download failed with HTTP ' . $response->getStatusCode() . '.', $response->getStatusCode());
         }
+        $stream = $response->getBody();
+        $data = '';
+        while (!$stream->eof()) {
+            $data .= $stream->read(self::CHUNK_BYTES);
+            if (strlen($data) > $this->maxDownloadBytes) {
+                throw new AdapterException(sprintf('The download is larger than %d bytes.', $this->maxDownloadBytes));
+            }
+        }
 
-        return (string)$response->getBody();
+        return $data;
     }
 
     private function call(string $method, string $path, ?array $body = null): array
@@ -126,9 +143,26 @@ final class AdapterClient
     {
         $parts = parse_url($url);
         $scheme = $parts['scheme'] ?? '';
-        $host = $parts['host'] ?? '';
-        if ($host === '' || ($scheme !== 'https' && !($scheme === 'http' && in_array($host, self::LOCAL_HOSTS, true)))) {
+        $host = strtolower($parts['host'] ?? '');
+        $localHttp = $this->settings->allowLocalHttp && $scheme === 'http' && in_array($host, self::LOCAL_HOSTS, true);
+        if ($host === '' || ($scheme !== 'https' && !$localHttp)) {
             throw new AdapterException($label . ' must use https.');
+        }
+
+        return $url;
+    }
+
+    private function checkedLink(string $url, string $label): string
+    {
+        $this->checkedUrl($url, $label);
+        $host = strtolower((string)parse_url($url, PHP_URL_HOST));
+        $allowed = $host === strtolower((string)parse_url($this->settings->adapterUrl, PHP_URL_HOST))
+            || ($this->settings->allowLocalHttp && in_array($host, self::LOCAL_HOSTS, true));
+        foreach ($this->settings->storageHosts as $pattern) {
+            $allowed = $allowed || fnmatch(strtolower(trim((string)$pattern)), $host);
+        }
+        if (!$allowed) {
+            throw new AdapterException(sprintf('%s points to the host %s, which is not allowed. Add it to the storage hosts setting if DigitalTolk uses it.', $label, $host));
         }
 
         return $url;

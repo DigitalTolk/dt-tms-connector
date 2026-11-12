@@ -4,6 +4,8 @@ adapterUrl =
 token =
 # cat=connection; type=string; label=Connection key: The key from DigitalTolk, starting with dtk_. The environment variable DT_TMS_CONNECTION_KEY replaces it.
 connectionKey =
+# cat=connection; type=string; label=Storage hosts: Hosts that the signed upload and download links may use, separated by commas. Wildcards are allowed.
+storageHosts = *.amazonaws.com
 # cat=import; type=options[Review in the module=review,Import into a workspace=workspace]; label=Import mode: Review lets an editor check and import each language. Workspace imports at once into the workspace below.
 importMode = review
 # cat=import; type=int+; label=Workspace UID: Used when the import mode is workspace.

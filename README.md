@@ -27,15 +27,41 @@ The `l10nmgr` export writes keys such as `NEW/1/7` for missing translations. An 
 
 ## Install
 
-1. `composer require digitaltolk/dt-tms-connector`
-2. If the site pins `config.platform.php` below 8.3, raise it to 8.3.
-3. `vendor/bin/typo3 extension:setup`
-4. Set the extension configuration (Settings, Extension Configuration, `dt_tms_connector`):
-   - **Adapter URL**, **Gateway token** and **Connection key**: DigitalTolk gives you all three. The environment variables `DT_TMS_ADAPTER_URL`, `DT_TMS_TOKEN` and `DT_TMS_CONNECTION_KEY` replace the settings, so the secrets can stay out of `config/system/settings.php`.
+Each release is one ZIP file, `dt_tms_connector_<version>.zip`. DigitalTolk sends it to you, and every [GitHub release](https://github.com/DigitalTolk/dt-tms-connector/releases) has it attached. You need no account, hosting or token to install it. Updates are manual: you install the new ZIP.
+
+### A. Site with Composer: artifact folder (recommended)
+
+1. Put the ZIP into a folder of the project, for example `packages/zip/`.
+2. Declare the folder once as a Composer artifact repository:
+   ```
+   composer config repositories.dt-tms-connector artifact ./packages/zip
+   ```
+3. Run `composer require digitaltolk/dt-tms-connector:^0.1`.
+4. If the site pins `config.platform.php` below 8.3, raise it to 8.3.
+5. Run `vendor/bin/typo3 extension:setup`.
+
+To update, put the new ZIP into the same folder and run `composer update digitaltolk/dt-tms-connector`.
+
+### B. Site without Composer: Extension Manager
+
+1. Install the Localization Manager (`l10nmgr`) 13 from the TYPO3 Extension Repository first.
+2. Open Admin Tools, Extensions, click "Upload Extension", pick the ZIP and activate the extension.
+
+To update, upload the new ZIP and allow the overwrite. A TYPO3 site that runs with Composer cannot upload extensions in the Extension Manager. Use A there.
+
+### C. From Packagist
+
+When the package is on Packagist, `composer require digitaltolk/dt-tms-connector` works without the artifact folder.
+
+## Configure
+
+1. Set the extension configuration (Settings, Extension Configuration, `dt_tms_connector`):
+   - **Adapter URL**, **Gateway token** and **Connection key**: DigitalTolk gives you all three. Set them with the environment variables `DT_TMS_ADAPTER_URL`, `DT_TMS_TOKEN` and `DT_TMS_CONNECTION_KEY`, so the secrets stay out of `config/system/settings.php`. The settings fields are for sites that cannot use environment variables.
+   - **Storage hosts**: the hosts that the signed upload and download links may use. The default `*.amazonaws.com` fits DigitalTolk's storage.
    - **Import mode**, **Workspace UID**, **Hide new translations** and **Poll interval**.
-5. Add a Scheduler task "Execute console commands" for `dttms:sync`, every 5 minutes. Or run `vendor/bin/typo3 dttms:sync` from cron.
-6. Give editors access to the module Web, Translations.
-7. Open the module and click Test connection.
+2. Add a Scheduler task "Execute console commands" for `dttms:sync`, every 5 minutes. Or run `vendor/bin/typo3 dttms:sync` from cron.
+3. Give editors access to the module Web, Translations.
+4. Open the module and click Test connection.
 
 ### Callback (optional)
 
@@ -49,9 +75,18 @@ DigitalTolk can call `https://<your site>/dt-tms/callback` when a language is de
 
 The extension sends nothing else, and it calls DigitalTolk only when an editor acts or the sync runs.
 
+## Security notes for site administrators
+
+- Each package that an editor sends can become a paid order. Give the module only to people who may order translations. DigitalTolk can also hold every package for review before it orders.
+- Keep the `l10nmgr` jobs folder outside the web root. Use the default `var/tx_l10nmgr`, do not point `baseFileStoragePath` into `public/`, and remove an old `public/uploads/tx_l10nmgr/` folder. Turn off the `l10nmgr` email and FTP options, or every export goes out that way too.
+- The extension never sends "HTML" content elements, because TYPO3 prints them without escaping. On import it keeps the source text of any field where the translation adds scripts or other active HTML, and the import summary says so. For extra safety, turn on `$GLOBALS['TYPO3_CONF_VARS']['SYS']['features']['security.backend.htmlSanitizeRte'] = true`.
+- Updates of existing translations go live at once. Use the import mode "workspace" if every change needs a review before it goes live.
+- The extension talks to DigitalTolk over https only, with time limits, and only to the adapter host and the storage hosts. Plain http to a local host works only in the TYPO3 Development context.
+- TYPO3 12.4 gets security fixes only through paid extended support (ELTS). Composer blocks the public 12.4 releases because of open security advisories.
+
 ## Notes
 
-- The import runs as the CLI user `_cli_`, which is an admin. So the module checks the editor first: Send, Import and Cancel need edit rights on every page of the package, modify rights on `pages` and `tt_content`, access to the target language, and the same workspace as the package (live in review mode).
+- The import runs as the CLI user `_cli_`, which is an admin. So the module checks the editor first: Send, Import and Cancel need edit rights on every page of the package (pages that are locked for editing are refused), modify rights on `pages`, `tt_content` and `sys_file_reference`, access to the languages, and the same workspace as the package (live in review mode).
 - Editors see only packages of pages they can read.
 - Hidden content elements are not sent (`--noHidden`). Hidden pages and content with a start or end time are sent, so you can translate them before they go live.
 - Folders, spacers and recycler pages are not sent. Pages inside a folder are sent.
@@ -75,7 +110,8 @@ The unit tests need no TYPO3 database. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 1. Update `CHANGELOG.md` and the version in `ext_emconf.php`.
 2. Push an annotated tag such as `0.2.0`.
-3. The `publish` workflow makes a GitHub release with the extension zip. When the repository secret `TYPO3_API_TOKEN` is set, it also publishes the version to the TYPO3 Extension Repository. Packagist reads the tag on its own.
+3. The `publish` workflow writes the version into the `composer.json` of the ZIP, so the ZIP works in a Composer artifact folder. It makes a GitHub release with the ZIP attached. When the environment `ter` has the secret `TYPO3_API_TOKEN`, it also publishes the version to the TYPO3 Extension Repository. Packagist reads the tag on its own.
+4. Send the ZIP from the GitHub release to the customers who install it by hand.
 
 ## Security
 

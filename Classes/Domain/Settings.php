@@ -17,6 +17,8 @@ final class Settings
         public readonly int $workspaceId = 0,
         public readonly bool $hideNewTranslations = true,
         public readonly int $pollMinutes = 15,
+        public readonly array $storageHosts = ['*.amazonaws.com'],
+        public readonly bool $allowLocalHttp = false,
     ) {
     }
 

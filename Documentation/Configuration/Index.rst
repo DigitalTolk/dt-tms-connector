@@ -17,10 +17,14 @@ Extension configuration
 Open Settings, Extension Configuration, ``dt_tms_connector``.
 
 Adapter URL, Gateway token, Connection key
-    DigitalTolk gives you all three. The environment variables
-    ``DT_TMS_ADAPTER_URL``, ``DT_TMS_TOKEN`` and ``DT_TMS_CONNECTION_KEY``
-    replace the settings, so the secrets can stay out of
-    ``config/system/settings.php``.
+    DigitalTolk gives you all three. Set them with the environment variables
+    ``DT_TMS_ADAPTER_URL``, ``DT_TMS_TOKEN`` and ``DT_TMS_CONNECTION_KEY``, so
+    the secrets stay out of ``config/system/settings.php``. The settings
+    fields are for sites that cannot use environment variables.
+
+Storage hosts
+    The hosts that the signed upload and download links may use, separated by
+    commas. The default ``*.amazonaws.com`` fits DigitalTolk's storage.
 
 Import mode
     ``review`` (default): an editor imports each language in the module.
@@ -46,8 +50,12 @@ Permissions
 ===========
 
 Give editors access to the module Web, Translations. Send, Import and Cancel
-need edit rights on every page of the package, modify rights on ``pages`` and
-``tt_content``, and access to the target language.
+need edit rights on every page of the package (pages that are locked for
+editing are refused), modify rights on ``pages``, ``tt_content`` and
+``sys_file_reference``, and access to the languages.
+
+Each package that an editor sends can become a paid order. Give the module
+only to people who may order translations.
 
 Callback
 ========
@@ -62,3 +70,20 @@ Test the connection
 
 Open the module and click Test connection. The message shows the connection
 name and its languages.
+
+Security
+========
+
+*   Keep the l10nmgr jobs folder outside the web root. Use the default
+    ``var/tx_l10nmgr``, do not point ``baseFileStoragePath`` into ``public/``,
+    and remove an old ``public/uploads/tx_l10nmgr/`` folder.
+*   Turn off the l10nmgr email and FTP options, or every export goes out that
+    way too.
+*   The extension never sends "HTML" content elements, because TYPO3 prints
+    them without escaping. On import it keeps the source text of any field
+    where the translation adds scripts or other active HTML, and the import
+    summary says so.
+*   For extra safety, set
+    ``$GLOBALS['TYPO3_CONF_VARS']['SYS']['features']['security.backend.htmlSanitizeRte'] = true``.
+*   Updates of existing translations go live at once. Use the import mode
+    ``workspace`` if every change needs a review before it goes live.

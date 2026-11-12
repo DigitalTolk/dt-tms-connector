@@ -10,6 +10,7 @@ final class RekeyResult
         public readonly string $xml,
         public readonly int $filled,
         public readonly int $total,
+        public readonly int $blocked = 0,
     ) {
     }
 }

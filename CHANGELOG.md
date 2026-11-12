@@ -4,6 +4,19 @@ All notable changes to this project are listed here. The project uses [semantic 
 
 ## [Unreleased]
 
+### Security
+
+- Never send "HTML" content elements, and keep the source text of fields where a translation adds scripts or active HTML.
+- Allow signed links only to the adapter host and the configured storage hosts, uploads only with PUT, and downloads up to 50 MB. Add time limits to every request.
+- Allow plain http to local hosts only in the TYPO3 Development context.
+- Keep the target of "external URL" pages from the source.
+- Check file reference rights, locked pages and language access for send, preview, import and cancel.
+
+### Changed
+
+- The preview shows the translated markup as text.
+- The release ZIP has its version in `composer.json`, so it installs from a Composer artifact folder.
+
 ## [0.1.0] - 2026-11-12
 
 ### Added
