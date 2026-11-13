@@ -16,6 +16,10 @@ Extension configuration
 
 Open Settings, Extension Configuration, ``dt_tms_connector``.
 
+..  figure:: /Images/install-04-extension-configuration.png
+    :alt: The connection settings in Extension Configuration
+    :class: with-shadow
+
 Adapter URL, Gateway token, Connection key
     DigitalTolk gives you all three. Set them with the environment variables
     ``DT_TMS_ADAPTER_URL``, ``DT_TMS_TOKEN`` and ``DT_TMS_CONNECTION_KEY``, so

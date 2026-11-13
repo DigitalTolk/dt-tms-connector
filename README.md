@@ -45,9 +45,19 @@ To update, put the new ZIP into the same folder and run `composer update digital
 ### B. Site without Composer: Extension Manager
 
 1. Install the Localization Manager (`l10nmgr`) 13 from the TYPO3 Extension Repository first.
-2. Open Admin Tools, Extensions, click "Upload Extension", pick the ZIP and activate the extension.
+2. Open Admin Tools, Extensions, and click "Upload Extension".
 
-To update, upload the new ZIP and allow the overwrite. A TYPO3 site that runs with Composer cannot upload extensions in the Extension Manager. Use A there.
+   ![The Upload Extension button in the Extension Manager](Documentation/Images/install-01-upload-extension.png)
+
+3. Pick `dt_tms_connector_<version>.zip` and click "Upload!".
+
+   ![The ZIP picked in the upload form](Documentation/Images/install-02-pick-zip.png)
+
+4. The Extension Manager installs and activates the extension. The module Web, Translations appears in the menu.
+
+   ![The extension installed and active](Documentation/Images/install-03-extension-active.png)
+
+To update, upload the new ZIP and select "Overwrite". A TYPO3 site that runs with Composer cannot upload extensions in the Extension Manager. Use A there.
 
 ### C. From Packagist
 
@@ -59,9 +69,39 @@ When the package is on Packagist, `composer require digitaltolk/dt-tms-connector
    - **Adapter URL**, **Gateway token** and **Connection key**: DigitalTolk gives you all three. Set them with the environment variables `DT_TMS_ADAPTER_URL`, `DT_TMS_TOKEN` and `DT_TMS_CONNECTION_KEY`, so the secrets stay out of `config/system/settings.php`. The settings fields are for sites that cannot use environment variables.
    - **Storage hosts**: the hosts that the signed upload and download links may use. The default `*.amazonaws.com` fits DigitalTolk's storage.
    - **Import mode**, **Workspace UID**, **Hide new translations** and **Poll interval**.
-2. Add a Scheduler task "Execute console commands" for `dttms:sync`, every 5 minutes. Or run `vendor/bin/typo3 dttms:sync` from cron.
+
+   ![The connection settings in Extension Configuration](Documentation/Images/install-04-extension-configuration.png)
+
+2. Add a Scheduler task "Execute console commands" for `dttms:sync`, every 5 minutes. Or run `vendor/bin/typo3 dttms:sync` from cron. On a site without Composer, the command is `typo3/sysext/core/bin/typo3 dttms:sync`.
 3. Give editors access to the module Web, Translations.
-4. Open the module and click Test connection.
+4. Open the module and click Test connection. The message shows the DigitalTolk connection and its languages.
+
+   ![Test connection in the Translations module](Documentation/Images/use-01-test-connection.png)
+
+## Use
+
+1. Open Web, Translations and click a page in the page tree.
+2. Pick the pages (this page only, 1 or 2 levels of subpages, or all subpages) and a due date.
+3. Pick the target languages. Write a note for DigitalTolk if you need to.
+4. Click Send.
+
+   ![The Send for translation form](Documentation/Images/use-02-send.png)
+
+5. The next sync sends the package to DigitalTolk. The list shows the package and the state of each language.
+
+   ![The package in the list after the sync](Documentation/Images/use-03-package-sent.png)
+
+6. When DigitalTolk delivers a language, its state changes to `downloaded`. Open the package and click Preview. The preview shows each field with the source and the translation.
+
+   ![The preview of a delivered language](Documentation/Images/use-04-preview.png)
+
+7. Click Import. The next sync imports the translation, and the module shows what it filled.
+
+   ![The import summary](Documentation/Images/use-05-imported.png)
+
+8. In review mode, new translations are imported hidden. Check them in the Page module, then make them visible.
+
+   ![German and the imported English in the Page module](Documentation/Images/use-06-page-module.png)
 
 ### Callback (optional)
 
