@@ -41,10 +41,26 @@ B. Site without Composer: Extension Manager
 
 #.  Install the Localization Manager (l10nmgr) 13 from the TYPO3 Extension
     Repository first.
-#.  Open Admin Tools, Extensions, click "Upload Extension", pick the ZIP and
-    activate the extension.
+#.  Open Admin Tools, Extensions, and click "Upload Extension".
 
-To update, upload the new ZIP and allow the overwrite. A TYPO3 site that runs
+    ..  figure:: /Images/install-01-upload-extension.png
+        :alt: The Upload Extension button in the Extension Manager
+        :class: with-shadow
+
+#.  Pick ``dt_tms_connector_<version>.zip`` and click "Upload!".
+
+    ..  figure:: /Images/install-02-pick-zip.png
+        :alt: The ZIP picked in the upload form
+        :class: with-shadow
+
+#.  The Extension Manager installs and activates the extension. The module
+    Web, Translations appears in the menu.
+
+    ..  figure:: /Images/install-03-extension-active.png
+        :alt: The extension installed and active
+        :class: with-shadow
+
+To update, upload the new ZIP and select "Overwrite". A TYPO3 site that runs
 with Composer cannot upload extensions in the Extension Manager. Use A there.
 
 C. From Packagist

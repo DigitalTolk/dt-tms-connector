@@ -48,7 +48,7 @@
             <thead><tr><th>Field</th><th>Source</th><th>Translation</th></tr></thead>
             <tbody>
                 <f:for each="{preview}" as="row">
-                    <tr><td>{row.table}:{row.uid} {row.field}</td><td>{row.source}</td><td>{row.text}</td></tr>
+                    <tr><td>{row.table}:{row.uid} {row.field}</td><td class="text-break">{row.source}</td><td class="text-break">{row.text}</td></tr>
                 </f:for>
             </tbody>
         </table>
