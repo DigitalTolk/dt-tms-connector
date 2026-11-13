@@ -59,10 +59,6 @@ To update, put the new ZIP into the same folder and run `composer update digital
 
 To update, upload the new ZIP and select "Overwrite". A TYPO3 site that runs with Composer cannot upload extensions in the Extension Manager. Use A there.
 
-### C. From Packagist
-
-When the package is on Packagist, `composer require digitaltolk/dt-tms-connector` works without the artifact folder.
-
 ## Configure
 
 1. Set the extension configuration (Settings, Extension Configuration, `dt_tms_connector`):
@@ -150,7 +146,7 @@ The unit tests need no TYPO3 database. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 1. Update `CHANGELOG.md` and the version in `ext_emconf.php`.
 2. Push an annotated tag such as `0.2.0`.
-3. The `publish` workflow writes the version into the `composer.json` of the ZIP, so the ZIP works in a Composer artifact folder. It makes a GitHub release with the ZIP attached. When the environment `ter` has the secret `TYPO3_API_TOKEN`, it also publishes the version to the TYPO3 Extension Repository. Packagist reads the tag on its own.
+3. The `publish` workflow writes the version into the `composer.json` of the ZIP, so the ZIP works in a Composer artifact folder. It makes a GitHub release with the ZIP attached. When the environment `ter` has the secret `TYPO3_API_TOKEN`, it also publishes the version to the TYPO3 Extension Repository.
 4. Send the ZIP from the GitHub release to the customers who install it by hand.
 
 ## Security

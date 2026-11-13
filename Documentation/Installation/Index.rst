@@ -62,9 +62,3 @@ B. Site without Composer: Extension Manager
 
 To update, upload the new ZIP and select "Overwrite". A TYPO3 site that runs
 with Composer cannot upload extensions in the Extension Manager. Use A there.
-
-C. From Packagist
-=================
-
-When the package is on Packagist, ``composer require
-digitaltolk/dt-tms-connector`` works without the artifact folder.
