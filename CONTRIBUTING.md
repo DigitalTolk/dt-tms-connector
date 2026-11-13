@@ -26,3 +26,10 @@ vendor/bin/phpunit
 ## Releases
 
 Maintainers release with a tag. See the Release section in the README.
+
+## Support and release policy
+
+- A published version is never removed and its tag never moves. Sites that installed it expect it to stay the same.
+- If a version has a bug or a security problem, we publish a fixed version. For a security problem we also publish a GitHub security advisory, so `composer audit` warns the sites that use an affected version.
+- If we stop maintaining the package, we mark it as abandoned on Packagist and in the TYPO3 Extension Repository, with a replacement if there is one. We do not delete it.
+- The owners in `.github/CODEOWNERS` answer issues and review pull requests. Security reports go through SECURITY.md.
