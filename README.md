@@ -27,7 +27,7 @@ The `l10nmgr` export writes keys such as `NEW/1/7` for missing translations. An 
 
 ## Install
 
-Each release is one ZIP file, `dt_tms_connector_<version>.zip`. DigitalTolk sends it to you, and every [GitHub release](https://github.com/DigitalTolk/dt-tms-connector/releases) has it attached. You need no account, hosting or token to install it. Updates are manual: you install the new ZIP.
+Each release is one ZIP file, `dt_tms_connector_<version>.zip`. DigitalTolk sends it to you. Version 0.1.0 is also in the TYPO3 Extension Repository. You need no account, hosting or token to install it. Updates are manual: you install the new ZIP.
 
 ### A. Site with Composer: artifact folder (recommended)
 
