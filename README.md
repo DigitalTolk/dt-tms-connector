@@ -63,6 +63,7 @@ To update, upload the new ZIP and select "Overwrite". A TYPO3 site that runs wit
 
 1. Set the extension configuration (Settings, Extension Configuration, `dt_tms_connector`):
    - **Adapter URL**, **Gateway token** and **Connection key**: DigitalTolk gives you all three. Set them with the environment variables `DT_TMS_ADAPTER_URL`, `DT_TMS_TOKEN` and `DT_TMS_CONNECTION_KEY`, so the secrets stay out of `config/system/settings.php`. The settings fields are for sites that cannot use environment variables.
+   - **Tenant**: the DigitalTolk tenant UUID, or the environment variable `DT_TMS_TENANT`. It is needed when the site uses a personal access token of a technical user. Leave it empty otherwise.
    - **Storage hosts**: the hosts that the signed upload and download links may use. The default `*.amazonaws.com` fits DigitalTolk's storage.
    - **Import mode**, **Workspace UID**, **Hide new translations** and **Poll interval**.
 
