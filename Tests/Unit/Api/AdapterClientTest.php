@@ -337,6 +337,18 @@ final class AdapterClientTest extends TestCase
         self::assertSame('bucket.s3.eu-north-1.amazonaws.com', $request->getHeaderLine('Host'));
     }
 
+    public function testSendsTheSignedIfNoneMatchHeaderWithAnUpload(): void
+    {
+        $client = $this->client([new Response(200)]);
+
+        $client->upload(['method' => 'PUT', 'url' => 'https://bucket.s3.eu-north-1.amazonaws.com/cms/x?sig=1', 'headers' => [
+            'Content-Type' => 'application/xml',
+            'If-None-Match' => '*',
+        ]], '<TYPO3L10N/>');
+
+        self::assertSame('*', $this->history[0]['request']->getHeaderLine('If-None-Match'));
+    }
+
     public function testRefusesADownloadThatIsTooLarge(): void
     {
         $client = $this->client([new Response(200, [], str_repeat('x', 2048))], null, 1024);

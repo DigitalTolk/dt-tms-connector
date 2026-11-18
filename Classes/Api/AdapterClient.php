@@ -19,7 +19,7 @@ final class AdapterClient
     private const RETRY_STATUSES = [429, 502, 503, 504];
     private const RETRY_STATUSES_POST = [429];
     private const LOCAL_HOSTS = ['localhost', '127.0.0.1', 'host.docker.internal'];
-    private const UPLOAD_HEADERS = ['content-type', 'content-md5', 'content-length'];
+    private const UPLOAD_HEADERS = ['content-type', 'content-md5', 'content-length', 'if-none-match'];
     private const CHUNK_BYTES = 65536;
     private const UUID_PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
 

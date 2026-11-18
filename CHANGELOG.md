@@ -7,6 +7,7 @@ All notable changes to this project are listed here. The project uses [semantic 
 ### Fixed
 
 - Add the setting Tenant (`DT_TMS_TENANT`) and send it as the `X-Tenant` header with every adapter call. It is needed when the site uses a personal access token of a technical user, which otherwise gets HTTP 403.
+- Send the signed `If-None-Match` header with the upload to storage. Without it, the storage refused every upload with HTTP 403.
 
 ## [0.1.0] - 2026-11-13
 
