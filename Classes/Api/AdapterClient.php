@@ -21,6 +21,7 @@ final class AdapterClient
     private const LOCAL_HOSTS = ['localhost', '127.0.0.1', 'host.docker.internal'];
     private const UPLOAD_HEADERS = ['content-type', 'content-md5', 'content-length'];
     private const CHUNK_BYTES = 65536;
+    private const UUID_PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
 
     private readonly \Closure $sleep;
 
@@ -111,6 +112,9 @@ final class AdapterClient
             ->withHeader('Accept', 'application/json')
             ->withHeader('Authorization', 'Bearer ' . $this->settings->token)
             ->withHeader('X-Connection-Key', $this->settings->connectionKey);
+        if ($this->settings->tenant !== '') {
+            $request = $request->withHeader('X-Tenant', $this->settings->tenant);
+        }
         if ($body !== null) {
             $request = $request->withHeader('Content-Type', 'application/json')
                 ->withBody($this->streams->createStream(json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)));
@@ -134,6 +138,9 @@ final class AdapterClient
     {
         if ($this->settings->token === '' || $this->settings->connectionKey === '' || $this->settings->adapterUrl === '') {
             throw new AdapterException('The adapter URL, the gateway token and the connection key must all be set.');
+        }
+        if ($this->settings->tenant !== '' && preg_match(self::UUID_PATTERN, $this->settings->tenant) !== 1) {
+            throw new AdapterException('The tenant must be the DigitalTolk tenant UUID, for example 0f8fad5b-d9cb-469f-a165-70867728950e, or empty.');
         }
 
         return rtrim($this->checkedUrl($this->settings->adapterUrl, 'The adapter URL'), '/') . '/';

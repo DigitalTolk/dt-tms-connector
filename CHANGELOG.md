@@ -2,6 +2,12 @@
 
 All notable changes to this project are listed here. The project uses [semantic versioning](https://semver.org).
 
+## [Unreleased]
+
+### Fixed
+
+- Add the setting Tenant (`DT_TMS_TENANT`) and send it as the `X-Tenant` header with every adapter call. It is needed when the site uses a personal access token of a technical user, which otherwise gets HTTP 403.
+
 ## [0.1.0] - 2026-11-13
 
 ### Added

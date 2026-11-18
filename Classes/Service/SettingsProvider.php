@@ -32,6 +32,7 @@ final class SettingsProvider
             max(1, (int)($config['pollMinutes'] ?? 15)),
             array_values(array_filter(array_map('trim', explode(',', (string)($config['storageHosts'] ?? '*.amazonaws.com'))))),
             Environment::getContext()->isDevelopment(),
+            trim((string)(getenv('DT_TMS_TENANT') ?: ($config['tenant'] ?? ''))),
         );
     }
 }

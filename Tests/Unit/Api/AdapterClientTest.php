@@ -61,6 +61,54 @@ final class AdapterClientTest extends TestCase
         self::assertSame('dtk_0123456789ab_secret', $request->getHeaderLine('X-Connection-Key'));
     }
 
+    public function testSendsTheTenantWithEveryAdapterCallWhenSet(): void
+    {
+        $settings = new Settings('https://gw.example/api/v1/tms-order-adapter/', 'pat-token', 'dtk_x', tenant: '0f8fad5b-d9cb-469f-a165-70867728950e');
+        $client = $this->client([self::success(200, ['connection' => 'acme-typo3']), self::success(202, ['package' => ['state' => 'queued']])], $settings);
+
+        $client->ping();
+        $client->complete('send-17', []);
+
+        self::assertCount(2, $this->history);
+        self::assertSame('0f8fad5b-d9cb-469f-a165-70867728950e', $this->history[0]['request']->getHeaderLine('X-Tenant'));
+        self::assertSame('0f8fad5b-d9cb-469f-a165-70867728950e', $this->history[1]['request']->getHeaderLine('X-Tenant'));
+    }
+
+    public function testSendsNoTenantWhenItIsEmpty(): void
+    {
+        $client = $this->client([self::success(200, ['connection' => 'acme-typo3'])]);
+
+        $client->ping();
+
+        self::assertFalse($this->history[0]['request']->hasHeader('X-Tenant'));
+    }
+
+    public function testRefusesATenantThatIsNotAUuid(): void
+    {
+        $client = $this->client([self::success(200, [])], new Settings('https://gw.example/', 'pat', 'dtk_x', tenant: '24translate'));
+
+        try {
+            $client->ping();
+            self::fail('no exception');
+        } catch (AdapterException $e) {
+            self::assertStringContainsString('tenant', $e->getMessage());
+            self::assertStringContainsString('UUID', $e->getMessage());
+        }
+        self::assertCount(0, $this->history);
+    }
+
+    public function testSendsNoTenantWithStorageRequests(): void
+    {
+        $settings = new Settings('https://gw.example/api/v1/tms-order-adapter/', 'pat', 'dtk_x', tenant: '0f8fad5b-d9cb-469f-a165-70867728950e');
+        $client = $this->client([new Response(200), new Response(200, [], '<TYPO3L10N/>')], $settings);
+
+        $client->upload(['method' => 'PUT', 'url' => 'https://bucket.s3.eu-north-1.amazonaws.com/cms/x?sig=1', 'headers' => ['Content-Type' => 'application/xml']], '<TYPO3L10N/>');
+        $client->download('https://bucket.s3.eu-north-1.amazonaws.com/out/en/export.xml?sig=1');
+
+        self::assertFalse($this->history[0]['request']->hasHeader('X-Tenant'));
+        self::assertFalse($this->history[1]['request']->hasHeader('X-Tenant'));
+    }
+
     public function testCompleteSendsTheManifestAsJson(): void
     {
         $client = $this->client([self::success(202, ['package' => ['reference' => 'send-17', 'state' => 'queued']])]);

@@ -26,6 +26,11 @@ Adapter URL, Gateway token, Connection key
     the secrets stay out of ``config/system/settings.php``. The settings
     fields are for sites that cannot use environment variables.
 
+Tenant
+    The DigitalTolk tenant UUID, or the environment variable
+    ``DT_TMS_TENANT``. It is needed when the site uses a personal access token
+    of a technical user. Leave it empty otherwise.
+
 Storage hosts
     The hosts that the signed upload and download links may use, separated by
     commas. The default ``*.amazonaws.com`` fits DigitalTolk's storage.
